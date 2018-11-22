@@ -8,9 +8,11 @@ namespace Brewit
         SpinButton SpinButtonMinutes { get; set; }
         SpinButton SpinButtonSeconds { get; set; }
         Button ButtonStartTimer { get; set; }
+        Button ButtonStopTimer { get; set; }
         Entry EntryMessage { get; set; }
         Label LabelTimeCountDown { get; set; }
         Table Layout { get; set; }
+        HButtonBox ButtonBoxStartStop { get; set; }
 
         protected void Build()
         {
@@ -53,7 +55,23 @@ namespace Brewit
                 Label = Mono.Unix.Catalog.GetString("Start")
             };
             ButtonStartTimer.Clicked += OnStartTimer;
+            //
+            ButtonStopTimer = new Button
+            {
+                CanFocus = true,
+                UseUnderline = true,
+                Label = Mono.Unix.Catalog.GetString("Stop"),
+                Sensitive = false
+            };
+            ButtonStopTimer.Clicked += OnStopTimer;
+            //
+            ButtonBoxStartStop = new HButtonBox
+            {
+                ButtonStartTimer,
+                ButtonStopTimer
+            };
             // 
+            var labelEntryMessage = new Label("Message");
             EntryMessage = new Entry
             {
                 CanFocus = true,
@@ -81,17 +99,13 @@ namespace Brewit
             Layout.Attach(SpinButtonMinutes, 1, 2, 0, 1);
             Layout.Attach(labelSeconds, 3, 4, 0, 1);
             Layout.Attach(SpinButtonSeconds, 4, 5, 0, 1);
-            Layout.Attach(EntryMessage, 1, 4, 1, 2);
-            Layout.Attach(ButtonStartTimer, 2, 3, 2, 3);
+            Layout.Attach(labelEntryMessage, 1, 2, 1, 2);
+            Layout.Attach(EntryMessage, 2, 4, 1, 2);
+            Layout.Attach(ButtonBoxStartStop, 1, 4, 2, 3);
             Layout.Attach(LabelTimeCountDown, 1, 4, 3, 4);
             //
             Add(Layout);
-            if ((Child != null))
-            {
-                Child.ShowAll();
-            }
-            DefaultWidth = 347;
-            DefaultHeight = 263;
+            Child.ShowAll();
         }
     }
 }

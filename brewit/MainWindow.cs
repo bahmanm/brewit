@@ -1,13 +1,14 @@
 ﻿using System;
 using Gtk;
 using Gdk;
+using System.Timers;
 
 namespace Brewit
 {
     public partial class MainWindow : Gtk.Window
     {
         int RemainingTime { get; set; }
-        System.Timers.Timer Timer { get; set; }
+        Timer Timer { get; set; }
 
         public MainWindow() : base(Gtk.WindowType.Toplevel)
         {
@@ -25,12 +26,19 @@ namespace Brewit
         {
             RemainingTime = (int)(SpinButtonMinutes.Value * 60 + SpinButtonSeconds.Value);
             UISetupBeforeCountdown();
-            Timer = new System.Timers.Timer(1000)
+            Timer = new Timer(1000)
             {
                 AutoReset = true
             };
             Timer.Elapsed += (src, evt) => Application.Invoke(OnTimeElapsed);
             Timer.Start();
+        }
+
+        protected void OnStopTimer(object sender, EventArgs e)
+        {
+            Timer.Stop();
+            RemainingTime = 0;
+            UISetupAfterCountdown();
         }
 
         protected void OnTimeElapsed(object src, EventArgs evt)
@@ -51,6 +59,8 @@ namespace Brewit
         protected void UISetupBeforeCountdown()
         {
             ButtonStartTimer.Sensitive = false;
+            ButtonStopTimer.Sensitive = true;
+            //
             EntryMessage.Sensitive = false;
             SpinButtonMinutes.Sensitive = false;
             SpinButtonSeconds.Sensitive = false;
@@ -65,6 +75,8 @@ namespace Brewit
             LabelTimeCountDown.Hide();
             //
             ButtonStartTimer.Sensitive = true;
+            ButtonStopTimer.Sensitive = false;
+            //
             EntryMessage.Sensitive = true;
             SpinButtonMinutes.Sensitive = true;
             SpinButtonSeconds.Sensitive = true;
