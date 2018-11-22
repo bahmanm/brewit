@@ -1,83 +1,90 @@
 ﻿using System;
 using Gtk;
+using Gdk;
 
-public partial class MainWindow : Gtk.Window
+namespace Brewit
 {
-    int RemainingTime { get; set; }
-    System.Timers.Timer Timer { get; set; }
-
-    public MainWindow() : base(Gtk.WindowType.Toplevel)
+    public partial class MainWindow : Gtk.Window
     {
-        Build();
-        //var fontdesc = PangoContext.FontDescription;
-        //fontdesc.Family = "Ubuntu";
-        //fontdesc.Size = 14;
-        //fontdesc.Weight = Pango.Weight.Bold;
-        //ButtonStartTimer.ModifyFont(fontdesc);
-        //LabelTimeCountDown.ModifyFont(fontdesc);
-        ShowAll();
-    }
+        int RemainingTime { get; set; }
+        System.Timers.Timer Timer { get; set; }
 
-    protected void OnDeleteEvent(object sender, DeleteEventArgs a)
-    {
-        Application.Quit();
-        a.RetVal = true;
-    }
-
-    protected void OnStartTimer(object sender, EventArgs e)
-    {
-        RemainingTime = (int)SpinButtonMinutes.Value;
-        UISetupBeforeCountdown();
-        Timer = new System.Timers.Timer(1000)
+        public MainWindow() : base(Gtk.WindowType.Toplevel)
         {
-            AutoReset = true,
-            Enabled = true
-        };
-        Timer.Elapsed += (src, evt) => Application.Invoke(OnTimeElapsed);
-    }
-
-    protected void OnTimeElapsed(object src, EventArgs evt)
-    {
-        if (RemainingTime == 0)
-        {
-            Timer.Enabled = false;
-            NotifyUser();
-            UISetupAfterCountdown();
+            Build();
+            ShowAll();
         }
-        else
+
+        protected void OnDeleteEvent(object sender, DeleteEventArgs a)
         {
-            RemainingTime -= 1;
+            Application.Quit();
+            a.RetVal = true;
+        }
+
+        protected void OnStartTimer(object sender, EventArgs e)
+        {
+            RemainingTime = (int)(SpinButtonMinutes.Value * 60 + SpinButtonSeconds.Value);
+            UISetupBeforeCountdown();
+            Timer = new System.Timers.Timer(1000)
+            {
+                AutoReset = true
+            };
+            Timer.Elapsed += (src, evt) => Application.Invoke(OnTimeElapsed);
+            Timer.Start();
+        }
+
+        protected void OnTimeElapsed(object src, EventArgs evt)
+        {
+            if (RemainingTime <= 0)
+            {
+                Timer.Stop();
+                NotifyUser();
+                UISetupAfterCountdown();
+            }
+            else
+            {
+                RemainingTime -= 1;
+                UpdateDisplay(RemainingTime);
+            }
+        }
+
+        protected void UISetupBeforeCountdown()
+        {
+            ButtonStartTimer.Sensitive = false;
+            EntryMessage.Sensitive = false;
+            SpinButtonMinutes.Sensitive = false;
+            SpinButtonSeconds.Sensitive = false;
+            //
             UpdateDisplay(RemainingTime);
+            //
+            LabelTimeCountDown.Show();
         }
-    }
 
-    protected void UISetupBeforeCountdown() 
-    {
-        //ButtonStartTimer.Sensitive = false;
-        //LabelTimeCountDown.Visible = true;
-        //EntryMessage.Sensitive = false;
-        Fixed.Sensitive = false;
-        LabelTimeCountDown.Sensitive = true;
-        UpdateDisplay(RemainingTime);
-    }
+        protected void UISetupAfterCountdown()
+        {
+            LabelTimeCountDown.Hide();
+            //
+            ButtonStartTimer.Sensitive = true;
+            EntryMessage.Sensitive = true;
+            SpinButtonMinutes.Sensitive = true;
+            SpinButtonSeconds.Sensitive = true;
+        }
 
-    protected void UISetupAfterCountdown() 
-    {
-        ButtonStartTimer.Sensitive = true;
-        LabelTimeCountDown.Visible = true;
-        EntryMessage.Sensitive = true;
-    }
+        protected void NotifyUser()
+        {
+            var dlg = new MessageDialog(this, DialogFlags.Modal,
+                                        MessageType.Info, ButtonsType.Close,
+                                        EntryMessage.Text);
+            dlg.Run();
+            dlg.Destroy();
+        }
 
-    protected void NotifyUser() {
-        var dlg = new MessageDialog(this, DialogFlags.Modal,
-                                    MessageType.Info, ButtonsType.Close,
-                                    EntryMessage.Text);
-        dlg.Run();
-        dlg.Destroy();
-    }
-
-    protected void UpdateDisplay(int remainingTime)
-    {
-        LabelTimeCountDown.Text = $"{remainingTime}";
+        protected void UpdateDisplay(int remainingTime)
+        {
+            var mins = remainingTime / 60;
+            var secs = remainingTime - mins * 60;
+            LabelTimeCountDown.Text = $"{mins.ToString("D2")}:{secs.ToString("D2")}";
+        }
     }
 }
+
